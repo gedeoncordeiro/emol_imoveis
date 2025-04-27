@@ -1,0 +1,9 @@
+
+emol_imoveis/
+├── app.py
+├── templates/
+│   └── formulario.html
+├── static/
+│   └── (CSS, JS, imagens, etc.)
+├── .venv/
+└── outras pastas...

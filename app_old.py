@@ -1,12 +1,8 @@
-from flask import Flask, render_template, request, send_file
-from fpdf import FPDF
-from io import BytesIO
-
-app = Flask(__name__)
-
 def calcular_emolumentos_registro(hectares, consultas, arquivamentos, folhas_acrescidas):
+    # Avaliação do imóvel
     valor_avaliacao = hectares * 6664
 
+    # Emolumentos fixos
     detalhes = [
         ("16.1 - Prenotação", 41.24),
         ("16.5 - Desmembramento", 153.66),
@@ -16,6 +12,7 @@ def calcular_emolumentos_registro(hectares, consultas, arquivamentos, folhas_acr
         ("16.22.2 - Averbação deferimento GEO", 127.87),
     ]
 
+    # Tabela para 16.3.x (baseado no valor de avaliação)
     faixas_16_3 = [
         (0, 5680.06, 105.67),
         (5680.07, 7384.08, 133.20),
@@ -55,17 +52,20 @@ def calcular_emolumentos_registro(hectares, consultas, arquivamentos, folhas_acr
         (7745309.12, float('inf'), 22781.08)
     ]
 
+    # Encontrar valor de 16.3.x
     valor_16_3 = 0
     for faixa in faixas_16_3:
         if faixa[0] <= valor_avaliacao <= faixa[1]:
             valor_16_3 = faixa[2]
             break
-
     detalhes.append(("16.3.x - Outorga de Título sob o valor", valor_16_3))
+
+    # Emolumentos adicionais fixos
     detalhes.append(("16.22.2 - Averbação de Cláusulas", 127.87))
     detalhes.append(("16.22.2 - Averbação CAR", 127.87))
     detalhes.append(("16.24.4 - Certidão inteiro teor", 96.90))
 
+    # Emolumentos variáveis
     valor_folhas_acrescidas = folhas_acrescidas * 9.64
     valor_consultas = consultas * 6.55
     valor_arquivamentos = arquivamentos * 6.55
@@ -74,59 +74,31 @@ def calcular_emolumentos_registro(hectares, consultas, arquivamentos, folhas_acr
     detalhes.append((f"16.42 - Consultas públicas ({consultas} consultas)", valor_consultas))
     detalhes.append((f"16.39 - Arquivamentos ({arquivamentos} arquivamentos)", valor_arquivamentos))
 
+    # Total
     total = sum(valor for _, valor in detalhes)
 
     return valor_avaliacao, detalhes, round(total, 2)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        nome = request.form.get('nome', '').strip()
-        hectares = request.form.get('hectares', '').strip()
-        consultas = request.form.get('consultas', '').strip()
-        arquivamentos = request.form.get('arquivamentos', '').strip()
-        folhas_acrescidas = request.form.get('folhas_acrescidas', '').strip()
-
-        if any(field == '' for field in [nome, hectares, consultas, arquivamentos, folhas_acrescidas]):
-            return "Erro: Todos os campos devem ser preenchidos!", 400
-
-        hectares = float(hectares.replace(",", "."))
-        consultas = int(consultas)
-        arquivamentos = int(arquivamentos)
-        folhas_acrescidas = int(folhas_acrescidas)
+# --- Execução do programa ---
+def main():
+    try:
+        hectares = float(input("Digite a quantidade de hectares: ").replace(",", "."))
+        consultas = int(input("Digite a quantidade de consultas de documentos públicos: "))
+        arquivamentos = int(input("Digite a quantidade de arquivamentos: "))
+        folhas_acrescidas = int(input("Digite a quantidade de folhas acrescidas na certidão de inteiro teor: "))
 
         valor_avaliacao, detalhes, total_emolumentos = calcular_emolumentos_registro(
             hectares, consultas, arquivamentos, folhas_acrescidas
         )
 
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-
-        pdf.cell(200, 10, f"Cliente: {nome}", ln=True)
-        pdf.cell(200, 10, f"Avaliação do imóvel: R$ {valor_avaliacao:.2f}", ln=True)
-        pdf.cell(200, 10, "Detalhamento dos Emolumentos:", ln=True)
-        pdf.ln(5)
-
+        print("\n--- Detalhamento dos Emolumentos ---")
+        print(f"Avaliação do imóvel: R$ {valor_avaliacao:.2f}\n")
         for nome_ato, valor_ato in detalhes:
-            pdf.cell(200, 8, f"{nome_ato}: R$ {valor_ato:.2f}", ln=True)
+            print(f"{nome_ato}: R$ {valor_ato:.2f}")
 
-        pdf.ln(10)
-        pdf.cell(200, 10, f"Total dos Emolumentos: R$ {total_emolumentos:.2f}", ln=True)
-
-        pdf_content = pdf.output(dest='S').encode('latin-1')
-        buffer = BytesIO()
-        buffer.write(pdf_content)
-        buffer.seek(0)
-
-        return send_file(
-            buffer,
-            as_attachment=True,
-            download_name=f"emolumentos_{nome.replace(' ', '_')}.pdf",
-            mimetype="application/pdf"
-        )
-
-    return render_template('formulario.html')
+        print(f"\nTotal dos emolumentos para registro: R$ {total_emolumentos:.2f}")
+    except ValueError:
+        print("Valor inválido. Certifique-se de digitar números corretamente.")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    main()

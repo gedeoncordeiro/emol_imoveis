@@ -1,11 +1,12 @@
 def calcular_emolumentos_registro(hectares, consultas, arquivamentos, folhas_acrescidas):
     # Avaliação do imóvel
-    valor_avaliacao = hectares * 6000
+    valor_avaliacao = hectares * 6664
 
     # Emolumentos fixos
     detalhes = [
         ("16.1 - Prenotação", 41.24),
-        ("16.5 - Desmembramento", 153.63),
+        ("16.5 - Desmembramento", 153.66),
+        ("16.24.1 - Certidão", 50.95),
         ("16.2 - Abertura de Matrícula", 97.16),
         ("16.22.4 - Averbação de Georreferenciamento", 530.76),
         ("16.22.2 - Averbação deferimento GEO", 127.87),
@@ -66,7 +67,7 @@ def calcular_emolumentos_registro(hectares, consultas, arquivamentos, folhas_acr
 
     # Emolumentos variáveis
     valor_folhas_acrescidas = folhas_acrescidas * 9.64
-    valor_consultas = consultas * 6.65
+    valor_consultas = consultas * 6.55
     valor_arquivamentos = arquivamentos * 6.55
 
     detalhes.append((f"16.24.4.1 - Folhas acrescidas ({folhas_acrescidas} folhas)", valor_folhas_acrescidas))
